@@ -8,12 +8,12 @@ set -e
 
 echo "⚠️  WARNING: This will delete ALL containers, volumes, and data!"
 echo "   This includes:"
-echo "   - All PostgreSQL data (Langfuse)"
-echo "   - All ClickHouse data"
 echo "   - All MongoDB data (LibreChat)"
-echo "   - All Redis data"
-echo "   - All MinIO data"
+echo "   - All Meilisearch data"
+echo "   - All VectorDB data"
 echo "   - All other volumes"
+echo ""
+echo "   Note: Langfuse Cloud and ClickHouse Cloud data are NOT affected."
 echo ""
 read -p "Are you sure you want to continue? (type 'yes' to confirm): " CONFIRM
 
@@ -32,5 +32,5 @@ echo ""
 echo "📝 Next steps:"
 echo "   1. Regenerate credentials: ./scripts/prepare-demo.sh"
 echo "   2. Start services: docker compose up -d"
-echo "   3. Navigate to: http://localhost:3000 (Langfuse) and http://localhost:3080 (LibreChat) and login"
+echo "   3. Navigate to: http://localhost:3080 (LibreChat) and login"
 echo ""

@@ -9,8 +9,6 @@ services:
         condition: service_started
       meilisearch:
         condition: service_started
-      clickhouse-mcp:
-        condition: service_healthy
       rag_api:
         condition: service_started
     healthcheck:
@@ -33,10 +31,10 @@ services:
       - VECTORDB_DB=${VECTORDB_DB:-mydatabase}
       - VECTORDB_USER=${VECTORDB_USER:-myuser}
       - VECTORDB_PASSWORD=${VECTORDB_PASSWORD:-mypassword}
-      # Langfuse Integration - Tracing and Observability
-      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
-      - LANGFUSE_SECRET_KEY=${LANGFUSE_INIT_PROJECT_SECRET_KEY}
-      - LANGFUSE_BASE_URL=http://langfuse-web:3000
+      # Langfuse Integration - Tracing and Observability (Langfuse Cloud US)
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_BASE_URL=${LANGFUSE_BASE_URL:-https://us.cloud.langfuse.com}
     volumes:
       - type: bind
         source: ./.env
@@ -56,9 +54,9 @@ services:
       mongodb:
         condition: service_started
     environment:
-      - LANGFUSE_INIT_USER_EMAIL=${LANGFUSE_INIT_USER_EMAIL}
-      - LANGFUSE_INIT_USER_PASSWORD=${LANGFUSE_INIT_USER_PASSWORD}
-      - LANGFUSE_INIT_USER_NAME=${LANGFUSE_INIT_USER_NAME}
+      - LIBRECHAT_USER_EMAIL=${LIBRECHAT_USER_EMAIL}
+      - LIBRECHAT_USER_PASSWORD=${LIBRECHAT_USER_PASSWORD}
+      - LIBRECHAT_USER_NAME=${LIBRECHAT_USER_NAME}
       - LIBRECHAT_PORT=${LIBRECHAT_PORT:-3080}
       - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-workos-2}
     volumes:

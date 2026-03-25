@@ -7,28 +7,7 @@ set -e
 
 echo "Generating cryptographically random credentials..."
 
-# Generate random passwords using openssl
-POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
-CLICKHOUSE_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
-REDIS_AUTH=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
-MINIO_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
-
-# Generate Langfuse-specific keys
-ENCRYPTION_KEY=$(openssl rand -hex 32)
-NEXTAUTH_SECRET=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
-SALT=$(openssl rand -hex 16)
-
-# Generate Langfuse initialization IDs (required for headless initialization)
-LANGFUSE_INIT_ORG_ID="org-$(openssl rand -hex 8)"
-LANGFUSE_INIT_ORG_NAME="Default Organization"
-LANGFUSE_INIT_PROJECT_ID="proj-$(openssl rand -hex 8)"
-LANGFUSE_INIT_PROJECT_NAME="Default Project"
-
-# Generate Langfuse API keys (format: pk-lf-... and sk-lf-...)
-LANGFUSE_INIT_PROJECT_PUBLIC_KEY="pk-lf-$(openssl rand -hex 16)"
-LANGFUSE_INIT_PROJECT_SECRET_KEY="sk-lf-$(openssl rand -hex 16)"
-
-# Generate ClickHouse MCP auth token (for HTTP transport)
+# Generate ClickHouse MCP auth token (for authenticating with ClickHouse Cloud MCP)
 CLICKHOUSE_MCP_AUTH_TOKEN=$(openssl rand -hex 32)
 
 # Generate LibreChat-specific credentials
@@ -39,34 +18,13 @@ VECTORDB_DB=${VECTORDB_DB:-librechat_vectordb}
 VECTORDB_USER=${VECTORDB_USER:-vectordb_user}
 VECTORDB_PASSWORD=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
 
-
 # Generate LibreChat JWT secret (required for authentication)
 JWT_SECRET=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
 JWT_REFRESH_SECRET=$(openssl rand -base64 32 | tr -d '/+=' | cut -c1-32)
 
-# # Prompt for user email or use default
-# read -p "Enter initial Langfuse user email (default: admin@example.com): " USER_EMAIL
-# USER_EMAIL=${USER_EMAIL:-admin@example.com}
-
-# # Prompt for user password or generate one
-# read -p "Enter initial Langfuse user password (default: will generate random): " USER_PASSWORD
-# if [ -z "$USER_PASSWORD" ]; then
-#     USER_PASSWORD=$(openssl rand -base64 16 | tr -d '/+=' | cut -c1-16)
-#     echo "Generated password: $USER_PASSWORD"
-# fi
-
 USER_EMAIL=${USER_EMAIL:-admin@admin.com}
 USER_PASSWORD=${USER_PASSWORD:-password}
 USER_NAME=${USER_NAME:-Admin}
-
-
-# LibreChat uses the same credentials as Langfuse
-LIBRECHAT_USER_EMAIL=${USER_EMAIL}
-LIBRECHAT_USER_PASSWORD=${USER_PASSWORD}
-LIBRECHAT_USER_NAME=${LANGFUSE_INIT_USER_NAME}
-
-# ClickHouse user (default is 'clickhouse' per Langfuse config)
-CLICKHOUSE_USER=${CLICKHOUSE_USER:-clickhouse}
 
 # Write to .env file
 cat > .env << EOF
@@ -74,78 +32,17 @@ cat > .env << EOF
 # DO NOT COMMIT THIS FILE - It contains secrets!
 
 # ============================================
-# PostgreSQL Configuration
-# ============================================
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-POSTGRES_DB=postgres
-
-# ============================================
-# ClickHouse Configuration
-# ============================================
-CLICKHOUSE_USER=${CLICKHOUSE_USER}
-CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
-
-# ============================================
-# ClickHouse MCP Configuration
+# ClickHouse Cloud MCP Configuration
+# Token used by LibreChat to authenticate with https://mcp.clickhouse.cloud/mcp
 # ============================================
 CLICKHOUSE_MCP_AUTH_TOKEN=${CLICKHOUSE_MCP_AUTH_TOKEN}
 
 # ============================================
-# Redis Configuration
+# Langfuse Cloud Configuration (US region)
+# Get your keys from: https://cloud.langfuse.com -> Project Settings -> API Keys
 # ============================================
-REDIS_AUTH=${REDIS_AUTH}
-
-# ============================================
-# MinIO Configuration
-# ============================================
-MINIO_ROOT_USER=minio
-MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-
-# ============================================
-# Langfuse Configuration
-# ============================================
-ENCRYPTION_KEY=${ENCRYPTION_KEY}
-NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-SALT=${SALT}
-
-# Langfuse Initialization (required for headless setup)
-LANGFUSE_INIT_ORG_ID=${LANGFUSE_INIT_ORG_ID}
-LANGFUSE_INIT_ORG_NAME=${LANGFUSE_INIT_ORG_NAME}
-LANGFUSE_INIT_PROJECT_ID=${LANGFUSE_INIT_PROJECT_ID}
-LANGFUSE_INIT_PROJECT_NAME=${LANGFUSE_INIT_PROJECT_NAME}
-
-# Langfuse Project Keys (used by the hook)
-LANGFUSE_INIT_PROJECT_PUBLIC_KEY=${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
-LANGFUSE_INIT_PROJECT_SECRET_KEY=${LANGFUSE_INIT_PROJECT_SECRET_KEY}
-
-# Your login credentials
-LANGFUSE_INIT_USER_EMAIL=${USER_EMAIL}
-LANGFUSE_INIT_USER_PASSWORD=${USER_PASSWORD}
-LANGFUSE_INIT_USER_NAME=${USER_NAME}
-
-# ============================================
-# Langfuse Environment Variables
-# ============================================
-NEXTAUTH_URL=http://localhost:3000
-DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/postgres
-CLICKHOUSE_MIGRATION_URL=clickhouse://clickhouse:9000
-CLICKHOUSE_URL=http://clickhouse:8123
-CLICKHOUSE_CLUSTER_ENABLED=false
-
-# S3/MinIO Configuration
-LANGFUSE_S3_EVENT_UPLOAD_BUCKET=langfuse
-LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID=minio
-LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
-LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT=http://minio:9000
-
-LANGFUSE_S3_MEDIA_UPLOAD_BUCKET=langfuse
-LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID=minio
-LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
-LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT=http://localhost:9090
-
-REDIS_HOST=redis
-REDIS_PORT=6379
+LANGFUSE_PUBLIC_KEY=pk-lf-REPLACE_WITH_CLOUD_KEY
+LANGFUSE_SECRET_KEY=sk-lf-REPLACE_WITH_CLOUD_KEY
 
 # ============================================
 # LibreChat Configuration
@@ -157,14 +54,10 @@ VECTORDB_DB=${VECTORDB_DB:-librechat_vectordb}
 VECTORDB_USER=${VECTORDB_USER:-vectordb_user}
 VECTORDB_PASSWORD=${VECTORDB_PASSWORD}
 
-# ============================================
-# LibreChat Configuration
-# ============================================
 JWT_SECRET=${JWT_SECRET}
 JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
 
 # LibreChat Initial User
-# Note: These are the same as the Langfuse credentials by default
 LIBRECHAT_USER_EMAIL=${USER_EMAIL}
 LIBRECHAT_USER_PASSWORD=${USER_PASSWORD}
 LIBRECHAT_USER_NAME=${USER_NAME}
@@ -186,33 +79,23 @@ echo ""
 echo "✅ Credentials generated successfully!"
 echo ""
 echo "📝 Generated .env file with:"
-echo "   - PostgreSQL password"
-echo "   - ClickHouse password"
-echo "   - Redis auth token"
-echo "   - MinIO root password"
-echo "   - Langfuse encryption key"
-echo "   - Langfuse NextAuth secret"
-echo "   - Langfuse salt"
-echo "   - Langfuse API keys"
-echo "   - Initial user credentials (preset)"
-echo "   - ClickHouse MCP auth token"
+echo "   - ClickHouse Cloud MCP auth token"
+echo "   - LibreChat credentials"
+echo "   - Langfuse Cloud key placeholders (fill these in from cloud.langfuse.com)"
+echo ""
+echo "⚠️  Before starting, set your Langfuse Cloud keys in .env:"
+echo "   LANGFUSE_PUBLIC_KEY=pk-lf-..."
+echo "   LANGFUSE_SECRET_KEY=sk-lf-..."
 echo ""
 echo "👤 Preset User Credentials:"
 echo "   Email: ${USER_EMAIL}"
-# echo "   Password: ${USER_PASSWORD}"
 echo ""
 echo "💡 To customize credentials, run with environment variables:"
 echo "   USER_EMAIL=your@email.com USER_PASSWORD=yourpass USER_NAME=yourname ./scripts/generate-env.sh"
 echo ""
-echo "📡 ClickHouse MCP will be available at: http://clickhouse-mcp:8000"
-echo "   Auth token: ${CLICKHOUSE_MCP_AUTH_TOKEN}"
-echo ""
 echo "💬 LibreChat will be available at: http://localhost:${LIBRECHAT_PORT}"
-echo "   MongoDB: localhost:27017"
-echo "   Meilisearch: localhost:7700"
-echo "   VectorDB: localhost:5433"
 echo ""
-echo "📝 LibreChat Initial User (same as Langfuse)"
+echo "📝 LibreChat Initial User"
 echo "   Email: ${USER_EMAIL}"
 echo "   Password: ${USER_PASSWORD}"
 echo "   Name: ${USER_NAME}"
