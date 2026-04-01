@@ -12,7 +12,7 @@ services:
       rag_api:
         condition: service_started
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3080/ || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:${LIBRECHAT_PORT:-3080}/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -119,6 +119,22 @@ services:
       - .env
     ports:
       - "127.0.0.1:${RAG_PORT:-8001}:${RAG_PORT:-8000}"
+
+  langfuse-enricher:
+    build:
+      context: ./scripts/enricher
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_started
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/
+      - LANGFUSE_PUBLIC_KEY=${LANGFUSE_PUBLIC_KEY}
+      - LANGFUSE_SECRET_KEY=${LANGFUSE_SECRET_KEY}
+      - LANGFUSE_BASE_URL=${LANGFUSE_BASE_URL:-https://us.cloud.langfuse.com}
+      - POLL_INTERVAL_SECONDS=60
+      - BACKFILL_DAYS=7
 
 volumes:
   librechat_mongodb_data:
